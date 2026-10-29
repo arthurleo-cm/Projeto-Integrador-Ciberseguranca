@@ -14,9 +14,9 @@ static uint32_t rotl32(uint32_t value, unsigned int shift)
 {
     return (value << shift) | (value >>(32 - shift));
 }
-static void print_hex(const uint8_t *data, size_t lenght)
+static void print_hex(const uint8_t *data, size_t length)
 {
-    for (size_t i = 0; i < lenght; i++)
+    for (size_t i = 0; i < length; i++)
     {
         printf("%02x",data[i]);
     }
@@ -66,7 +66,7 @@ int main()
         printf("Passou no teste de Validação\n");
     }else
     {
-        printf("Teste falhou");
+        printf("Teste falhou\n");
     }
     
     return 0;
