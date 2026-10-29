@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Marquezi • Gestão da advocacia</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div id="login" class="login-screen">
+      <div class="login-card">
+        <div class="brand-mark">M</div>
+        <p class="eyebrow">ADVOCACIA PEDRO MARQUEZI</p>
+        <h1>Marquezi <span>Gestão</span></h1>
+        <p class="muted">Acesso da equipe do escritório.</p>
+        <form id="loginForm">
+          <label
+            >E-mail<input
+              name="email"
+              type="email"
+              autocomplete="username"
+              maxlength="180"
+              required /></label
+          ><label
+            >Senha<input
+              name="senha"
+              type="password"
+              autocomplete="current-password"
+              maxlength="128"
+              required /></label
+          ><button>Entrar</button>
+        </form>
+        <form id="mfaForm" class="hidden">
+          <p id="mfaDestination" class="muted"></p>
+          <label
+            >Código de 6 dígitos<input
+              name="codigo"
+              type="text"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              pattern="[0-9]{6}"
+              minlength="6"
+              maxlength="6"
+              required /></label
+          ><button>Confirmar código</button>
+          <button id="mfaResend" class="secondary" type="button">
+            Reenviar código
+          </button>
+          <button id="mfaCancel" class="secondary" type="button">
+            Voltar
+          </button>
+        </form>
+      </div>
+    </div>
+    <div id="app" class="hidden">
+      <aside>
+        <div class="side-brand">
+          <div class="brand-mark">M</div>
+          <div><b>Marquezi</b><small>ADVOCACIA</small></div>
+        </div>
+        <nav>
+          <button class="nav" data-page="dashboard">Visão geral</button
+          ><button class="nav" data-page="clients">Clientes</button
+          ><button class="nav" data-page="processes">Processos</button
+          ><button class="nav admin-only" data-page="users">Usuários</button
+          ><button class="nav admin-only" data-page="audit">Auditoria</button
+          ><button class="nav" data-page="account">Minha conta</button>
+        </nav>
+      </aside>
+      <main>
+        <header>
+          <div>
+            <p class="eyebrow">GESTÃO DO ESCRITÓRIO</p>
+            <h2 id="pageTitle">Visão geral</h2>
+          </div>
+          <div class="header-actions">
+            <div class="accessibility" aria-label="Preferências de visualização">
+              <button type="button" class="icon-button" data-pref="theme" title="Alternar tema" aria-label="Alternar tema">◐</button>
+              <button type="button" class="icon-button" data-pref="font" title="Aumentar letras" aria-label="Aumentar letras">A+</button>
+              <button type="button" class="icon-button" data-pref="contrast" title="Alto contraste" aria-label="Alternar alto contraste">◑</button>
+            </div>
+            <div class="user-pill">
+            <span id="avatar"></span>
+            <div><b id="userName"></b><small id="role"></small></div>
+            <button id="logout">Sair</button>
+            </div>
+          </div>
+        </header>
+        <section id="content" aria-live="polite"></section>
+      </main>
+    </div>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script src="/bootstrap.js" defer></script>
+  </body>
+</html>
