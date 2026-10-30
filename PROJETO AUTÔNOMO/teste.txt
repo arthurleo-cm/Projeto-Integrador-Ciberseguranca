@@ -1,1 +1,11 @@
-
+TESTE DE VALIDAÇÃO 
+  uint32_t a = 0x11111111;
+	uint32_t b = 0x01020304;
+	uint32_t c = 0x9b8d6f43;
+	uint32_t d = 0x01234567;
+// Esses valores são de referencia após o quarter_round com base nos valores acima
+//  a = 0xea2a92f4
+//  b = 0xcb1cf8ce
+//  c = 0x4581472e
+//  d = 0x5881c4bb
+isso significa que a função passou em teste de validação até agora, com base no fc8439
