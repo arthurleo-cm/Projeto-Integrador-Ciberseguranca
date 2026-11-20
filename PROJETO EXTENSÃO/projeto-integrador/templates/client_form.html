@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon, status_tag %}
+{% block page_title %}{{ client.nome if client else "Novo cliente" }}{% endblock %}
+{% block crumb %}<a href="{{ url_for('clients_page') }}">Clientes</a> / {{ self.page_title() }}{% endblock %}
+
+{% macro contact_row(i, c) %}
+<fieldset class="repeat-row">
+  <div class="contact-grid">
+    <label>Tipo
+      <select name="contato_tipo_{{ i }}">
+        {% for t, label in [("TELEFONE","Telefone"),("WHATSAPP","WhatsApp"),("EMAIL","E-mail"),("INSTAGRAM","Instagram"),("LINKEDIN","LinkedIn"),("FACEBOOK","Facebook"),("SITE","Site"),("OUTRO","Outro")] %}
+        <option value="{{ t }}" {{ 'selected' if c.tipo == t }}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Contato<input name="contato_valor_{{ i }}" required maxlength="180" value="{{ c.valor or '' }}" placeholder="(11) 99999-9999, e-mail, @perfil…"></label>
+    <label class="check"><input type="checkbox" name="contato_principal_{{ i }}" {{ 'checked' if c.principal }}> Principal</label>
+  </div>
+  <button type="submit" name="op" value="remove:contato:{{ i }}" formnovalidate class="btn btn-danger-ghost btn-sm remove-row" title="Remover contato">{{ icon('x') }}<span class="sr-only">Remover contato</span></button>
+</fieldset>
+{% endmacro %}
+
+{% macro address_row(i, a) %}
+<fieldset class="repeat-row">
+  <div class="form-grid form-grid-3">
+    <label>Tipo
+      <select name="endereco_tipo_{{ i }}">
+        {% for t in ["RESIDENCIAL", "COMERCIAL", "OUTRO"] %}<option value="{{ t }}" {{ 'selected' if a.tipo == t }}>{{ t | code_label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>CEP<input name="endereco_cep_{{ i }}" inputmode="numeric" maxlength="8" pattern="[0-9]{8}" placeholder="Somente números" value="{{ a.cep or '' }}" data-mask="digits"></label>
+    <label>UF
+      <select name="endereco_uf_{{ i }}">
+        {% for uf in "AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO".split() %}
+        <option value="{{ uf }}" {{ 'selected' if (a.uf or 'SP') == uf }}>{{ uf }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="span-2">Logradouro<input name="endereco_logradouro_{{ i }}" required maxlength="150" value="{{ a.logradouro or '' }}"></label>
+    <label>Número<input name="endereco_numero_{{ i }}" required maxlength="15" value="{{ a.numero or '' }}"></label>
+    <label>Complemento<input name="endereco_complemento_{{ i }}" maxlength="100" value="{{ a.complemento or '' }}"></label>
+    <label>Bairro<input name="endereco_bairro_{{ i }}" maxlength="100" value="{{ a.bairro or '' }}"></label>
+    <label>Cidade<input name="endereco_cidade_{{ i }}" required maxlength="100" value="{{ a.cidade or '' }}"></label>
+  </div>
+  <label class="check"><input type="checkbox" name="endereco_principal_{{ i }}" {{ 'checked' if a.principal }}> Endereço principal</label>
+  <button type="submit" name="op" value="remove:endereco:{{ i }}" formnovalidate class="btn btn-danger-ghost btn-sm remove-row" title="Remover endereço">{{ icon('x') }}<span class="sr-only">Remover endereço</span></button>
+</fieldset>
+{% endmacro %}
+
+{% block content %}
+{% set f = form %}
+<div class="page-head">
+  <div>
+    <h2>{{ self.page_title() }}</h2>
+    <p>{% if client %}Cliente #{{ client.id_cliente }} · <span class="tag {{ '' if client.ativo else 'tag-muted' }}">{{ "Ativo" if client.ativo else "Inativo" }}</span>{% else %}Preencha os dados principais. Contatos e endereços são opcionais.{% endif %}</p>
+  </div>
+  <div class="page-actions">
+    <a href="{{ url_for('clients_page') }}" class="btn btn-secondary">{{ icon('arrow-left') }} Voltar</a>
+    {% if client %}<a href="{{ url_for('process_new', client_id=client.id_cliente) }}" class="btn">{{ icon('plus') }} Novo processo</a>{% endif %}
+  </div>
+</div>
+
+<form method="post" class="card" action="{{ url_for('client_edit', client_id=client.id_cliente) if client else url_for('client_new') }}">
+  {# Primeiro botão de envio do formulário: é ele que o Enter aciona, e não "+ Adicionar". #}
+  <button type="submit" class="sr-only" tabindex="-1" aria-hidden="true">Salvar</button>
+  <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+  {% if client %}<input type="hidden" name="versao" value="{{ client.versao }}">{% endif %}
+
+  <div class="card-head"><h3>Dados do cliente</h3></div>
+  <div class="form-grid">
+    <label>Tipo de pessoa
+      <select name="tipo_pessoa">
+        <option value="PF" {{ 'selected' if f.tipo_pessoa != 'PJ' }}>Pessoa física</option>
+        <option value="PJ" {{ 'selected' if f.tipo_pessoa == 'PJ' }}>Pessoa jurídica</option>
+      </select>
+    </label>
+    <label>Nome completo ou razão social
+      <input name="nome" required maxlength="150" value="{{ f.nome or '' }}">
+    </label>
+    <label><span>CPF ou CNPJ <span class="hint">(opcional)</span></span>
+      <input name="cpf_cnpj" inputmode="numeric" autocomplete="off" maxlength="18" data-mask="doc"
+             placeholder="000.000.000-00 ou 00.000.000/0000-00" value="{{ f.cpf_cnpj | mask_doc if f.cpf_cnpj else '' }}">
+      <span class="field-error" data-error></span>
+    </label>
+    <label><span>Data de nascimento <span class="hint">(só pessoa física)</span></span>
+      <input name="data_nascimento" type="date" max="{{ today }}" value="{{ f.data_nascimento or '' }}">
+    </label>
+    <label class="span-2">Observações
+      <textarea name="observacoes" rows="3" maxlength="10000" placeholder="Informações relevantes sobre o cliente">{{ f.observacoes or '' }}</textarea>
+    </label>
+  </div>
+  <label class="check mt"><input type="checkbox" name="ativo" {{ 'checked' if f.ativo }}> Cadastro ativo <span class="hint">(clientes inativos não recebem novos processos)</span></label>
+
+  <div class="subsection">
+    <div class="card-head">
+      <div><h3>Contatos</h3><p>Telefone, e-mail, redes sociais…</p></div>
+      <button type="submit" name="op" value="add:contato" formnovalidate class="btn btn-soft btn-sm">{{ icon('plus') }} Adicionar contato</button>
+    </div>
+    <div class="repeat-list">
+      {% for c in contatos %}{{ contact_row(loop.index0, c) }}{% else %}<div class="empty-rows">Nenhum contato cadastrado.</div>{% endfor %}
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="card-head">
+      <h3>Endereços</h3>
+      <button type="submit" name="op" value="add:endereco" formnovalidate class="btn btn-soft btn-sm">{{ icon('plus') }} Adicionar endereço</button>
+    </div>
+    <div class="repeat-list">
+      {% for a in enderecos %}{{ address_row(loop.index0, a) }}{% else %}<div class="empty-rows">Nenhum endereço cadastrado.</div>{% endfor %}
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <span class="muted">Adicionar ou remover linhas não salva; clique em "Salvar cadastro" no final.</span>
+    <a href="{{ url_for('client_edit', client_id=client.id_cliente) if client else url_for('clients_page') }}" class="btn btn-ghost">Cancelar</a>
+    <button type="submit" class="btn">Salvar cadastro</button>
+  </div>
+</form>
+
+{% if client %}
+<div class="grid grid-2 section">
+  <section class="card">
+    <div class="card-head">
+      <div><h3>Processos</h3><p>{{ processos | length }} vinculado{{ 's' if processos | length != 1 }}</p></div>
+      <a href="{{ url_for('process_new', client_id=client.id_cliente) }}" class="btn btn-soft btn-sm">{{ icon('plus') }} Novo</a>
+    </div>
+    <div class="list">
+      {% for p in processos %}
+      <a class="list-item" href="{{ url_for('process_edit', process_id=p.id_processo) }}">
+        <span class="grow"><b>{{ p.titulo }}</b><small class="tabnum">{{ p.numero_cnj | mask_cnj }}</small></span>
+        {{ status_tag(p.status, p.situacao) }}
+      </a>
+      {% else %}
+      <div class="empty">{{ icon('briefcase') }}<p>Nenhum processo vinculado.</p></div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="card" id="documentos">
+    <div class="card-head"><div><h3>Documentos</h3><p>PDF, JPEG ou PNG até 10 MB · armazenados cifrados</p></div></div>
+    <form method="post" enctype="multipart/form-data" class="stack" action="{{ url_for('document_upload', client_id=client.id_cliente) }}">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      <div class="form-grid">
+        <label>Título<input name="titulo" required maxlength="150" placeholder="Ex.: RG frente e verso"></label>
+        <label>Categoria
+          <select name="tipo_documento">
+            {% for t in ["IDENTIFICACAO", "PROCURACAO", "CONTRATO", "OUTRO"] %}<option value="{{ t }}" {{ 'selected' if t == 'OUTRO' }}>{{ t | code_label }}</option>{% endfor %}
+          </select>
+        </label>
+      </div>
+      <label>Arquivo<input name="arquivo" type="file" required accept="application/pdf,image/jpeg,image/png"></label>
+      <div><button type="submit" class="btn btn-soft">{{ icon('upload') }} Enviar documento</button></div>
+    </form>
+    <div class="list mt">
+      {% for d in documentos %}
+      <div class="list-item">
+        <span class="file-icon {{ 'img' if d.ext and d.ext != 'pdf' }}">{{ (d.ext or 'doc') | upper }}</span>
+        <span class="grow"><b>{{ d.titulo }}</b><small>{{ d.tipo_documento | code_label }} · {{ d.nome_original }} · {{ "%.1f" | format(d.tamanho_bytes / 1024) }} KB · {{ d.data_envio | date_br }}</small></span>
+        <span class="row-actions">
+          <a class="btn btn-ghost btn-sm" href="{{ url_for('document_download', doc_id=d.id_documento) }}" title="Baixar">{{ icon('download') }}</a>
+          {% if is_admin %}
+          <form method="post" class="inline-form" action="{{ url_for('document_delete', doc_id=d.id_documento) }}">
+            <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+            <button type="submit" class="btn btn-danger-ghost btn-sm" title="Excluir">{{ icon('trash') }}</button>
+          </form>
+          {% endif %}
+        </span>
+      </div>
+      {% else %}
+      <p class="muted">Nenhum documento enviado.</p>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+{% if is_admin %}
+<div class="danger-zone">
+  <div><b>Excluir cadastro</b><p class="muted">Só é possível quando o cliente não tem documentos nem processos.</p></div>
+  <form method="post" class="inline-form" action="{{ url_for('client_delete', client_id=client.id_cliente) }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <button type="submit" class="btn btn-danger">{{ icon('trash') }} Excluir cliente</button>
+  </form>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

@@ -10,7 +10,7 @@
 	request_body {
 		max_size 11MB
 	}
-	reverse_proxy 127.0.0.1:3000 {
+	reverse_proxy 127.0.0.1:5000 {
 		header_up Host {host}
 		header_up X-Forwarded-Proto {scheme}
 	}

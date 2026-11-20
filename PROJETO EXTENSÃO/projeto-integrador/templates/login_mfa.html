@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Código de acesso — Marquezi Gestão{% endblock %}
+{% block public %}
+<div class="login-screen">
+  <div class="login-card">
+    <div class="brand-mark">M</div>
+    <p class="eyebrow">Verificação em duas etapas</p>
+    <h1>Código de <span>acesso</span></h1>
+    <p class="muted">Enviamos um código de 6 dígitos para <b>{{ destino }}</b>. Ele expira em 10 minutos e só pode ser usado uma vez.</p>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    <div class="flash {{ category }}" role="alert"><p>{{ message }}</p></div>
+    {% endfor %}
+    {% endwith %}
+    <form method="post" class="stack">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      <label>Código
+        <input name="codigo" class="code-input" inputmode="numeric" autocomplete="one-time-code"
+               pattern="[0-9]{6}" maxlength="6" required autofocus placeholder="000000" data-mask="digits">
+      </label>
+      <button type="submit" class="btn btn-block">Confirmar e entrar</button>
+    </form>
+    <div class="login-links">
+      <form method="post" action="{{ url_for('login_mfa_resend') }}" class="inline-form">
+        <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+        <button type="submit" class="btn btn-ghost btn-sm">Reenviar código</button>
+      </form>
+      <a href="{{ url_for('login') }}" class="btn btn-ghost btn-sm">Usar outra conta</a>
+    </div>
+    <p class="login-foot muted">Não recebeu? Confira o spam. Depois de 5 códigos errados é preciso entrar de novo.</p>
+  </div>
+</div>
+{% endblock %}

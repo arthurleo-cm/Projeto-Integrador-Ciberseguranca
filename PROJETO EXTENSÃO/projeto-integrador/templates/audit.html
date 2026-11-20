@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "_icons.html" import pagination with context %}
+{% block page_title %}Auditoria{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h2>Auditoria</h2><p>Registro de quem acessou ou alterou cada informação. Não pode ser editado.</p></div>
+</div>
+{% set tones = {'LOGIN':'tag-ok','LOGOUT':'tag-muted','LEITURA':'tag-muted','CADASTRO':'','ALTERACAO':'tag-warn','EXCLUSAO':'tag-danger'} %}
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Quando</th><th>Usuário</th><th>Ação</th><th>Registro</th></tr></thead>
+    <tbody>
+    {% for r in items %}
+    <tr>
+      <td class="tabnum">{{ r.data_hora | date_br }}</td>
+      <td>{{ r.usuario }}</td>
+      <td><span class="tag {{ tones.get(r.acao, '') }}">{{ r.acao | code_label }}</span></td>
+      <td>{{ r.tabela_afetada | code_label }} <small class="tabnum">#{{ r.id_registro }}</small></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4"><div class="empty"><p>Nenhuma atividade registrada.</p></div></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ pagination(page, total, 50, 'registros') }}
+{% endblock %}

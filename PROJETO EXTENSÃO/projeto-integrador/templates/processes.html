@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon, status_tag, pagination with context %}
+{% block page_title %}Processos{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h2>Processos</h2><p>Acompanhe andamento, prazos, anexos e financeiro.</p></div>
+  <div class="page-actions"><a href="{{ url_for('process_new') }}" class="btn">{{ icon('plus') }} Novo processo</a></div>
+</div>
+
+<form class="toolbar" method="get" role="search">
+  <label class="search">
+    {{ icon('search') }}
+    <span class="sr-only">Buscar</span>
+    <input name="q" value="{{ q }}" maxlength="180" placeholder="Buscar por nº CNJ, título, cliente ou #ID…">
+
+  </label>
+  {% for k, v in filters.items() if k not in ('q', 'page') and v %}
+  <input type="hidden" name="{{ k }}" value="{{ v }}">
+  {% endfor %}
+  <button type="submit" class="btn">Buscar</button>
+</form>
+
+<details class="card filters" {{ 'open' if active_filters }}>
+  <summary>{{ icon('filter') }} Filtros avançados {% if active_filters %}<span class="badge">{{ active_filters }}</span>{% endif %}</summary>
+  <form method="get">
+    <input type="hidden" name="q" value="{{ q }}">
+    <div class="filter-grid">
+      <span class="filter-group-title">Classificação</span>
+      <label>Status
+        <select name="status">
+          <option value="">Todos</option>
+          {% for s in PROCESS_STATUS %}<option value="{{ s }}" {{ 'selected' if filters.get('status') == s }}>{{ s | code_label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Situação
+        <select name="situacao">
+          <option value="">Todas</option>
+          {% for s in ['ATIVO', 'ENCERRADO', 'ARQUIVADO'] %}<option value="{{ s }}" {{ 'selected' if filters.get('situacao') == s }}>{{ s | code_label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Ramo
+        <select name="ramo">
+          <option value="">Todos</option>
+          {% for r in PROCESS_TYPES %}<option value="{{ r }}" {{ 'selected' if filters.get('ramo') == r }}>{{ r | code_label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Tipificação
+        <select name="tipificacao">
+          <option value="">Todas</option>
+          {% for t in all_tipificacoes %}<option value="{{ t }}" {{ 'selected' if filters.get('tipificacao') == t }}>{{ t | code_label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Cliente
+        <select name="id_cliente">
+          <option value="">Todos</option>
+          {% for c in client_options %}<option value="{{ c.id_cliente }}" {{ 'selected' if filters.get('id_cliente') == c.id_cliente | string }}>{{ c.nome }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Anexos
+        <select name="com_anexos">
+          <option value="">Todos</option>
+          <option value="1" {{ 'selected' if filters.get('com_anexos') == '1' }}>Com qualquer anexo</option>
+          <option value="FOTO" {{ 'selected' if filters.get('com_anexos') == 'FOTO' }}>Com fotos</option>
+          <option value="DOCUMENTO" {{ 'selected' if filters.get('com_anexos') == 'DOCUMENTO' }}>Com documentos</option>
+          <option value="0" {{ 'selected' if filters.get('com_anexos') == '0' }}>Sem anexos</option>
+        </select>
+      </label>
+
+      <span class="filter-group-title">Datas</span>
+      <label>Abertura de<input type="date" name="abertura_de" value="{{ filters.get('abertura_de', '') }}"></label>
+      <label>Abertura até<input type="date" name="abertura_ate" value="{{ filters.get('abertura_ate', '') }}"></label>
+      <label>Atualização de<input type="date" name="atualizacao_de" value="{{ filters.get('atualizacao_de', '') }}"></label>
+      <label>Atualização até<input type="date" name="atualizacao_ate" value="{{ filters.get('atualizacao_ate', '') }}"></label>
+
+      {% if is_admin %}
+      <span class="filter-group-title">Financeiro (R$)</span>
+      <label>Valor estimado mínimo<input type="number" name="valor_min" min="0" step="0.01" placeholder="0,00" value="{{ filters.get('valor_min', '') }}"></label>
+      <label>Valor estimado máximo<input type="number" name="valor_max" min="0" step="0.01" placeholder="0,00" value="{{ filters.get('valor_max', '') }}"></label>
+      <label>Recebido mínimo<input type="number" name="recebido_min" min="0" step="0.01" placeholder="0,00" value="{{ filters.get('recebido_min', '') }}"></label>
+      <label>Recebido máximo<input type="number" name="recebido_max" min="0" step="0.01" placeholder="0,00" value="{{ filters.get('recebido_max', '') }}"></label>
+      {% endif %}
+    </div>
+    <div class="form-actions">
+      <a href="{{ url_for('processes_page') }}" class="btn btn-ghost">Limpar filtros</a>
+      <button type="submit" class="btn">Aplicar filtros</button>
+    </div>
+  </form>
+</details>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Processo</th><th>Cliente</th><th>Status</th><th class="hide-sm">Última atualização</th>
+        {% if is_admin %}<th class="num hide-sm">Estimado</th>{% endif %}
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for p in items %}
+    <tr>
+      <td>
+        <span class="title">{{ p.titulo }}</span>
+        <small class="tabnum">#{{ p.id_processo }} · {{ p.numero_cnj | mask_cnj }}</small>
+        <small>{{ p.ramo | code_label }} · {{ p.tipificacao | code_label }}{% if p.orgao %} · {{ p.orgao }}{% endif %}</small>
+      </td>
+      <td>{{ p.cliente }}</td>
+      <td>{{ status_tag(p.status, p.situacao) }}</td>
+      <td class="hide-sm">
+        {% if p.ultima_movimentacao %}{{ p.ultima_movimentacao | date_br }}<small>Registro: {{ p.data_atualizacao | date_br }}</small>
+        {% else %}{{ p.data_atualizacao | date_br }}{% endif %}
+      </td>
+      {% if is_admin %}<td class="num hide-sm">{{ p.valor_estimado_centavos | money }}</td>{% endif %}
+      <td class="actions"><a class="btn btn-secondary btn-sm row-link" href="{{ url_for('process_edit', process_id=p.id_processo) }}">Abrir</a></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="{{ 6 if is_admin else 5 }}">
+      <div class="empty">
+        {{ icon('briefcase') }}
+        <p>{{ "Nenhum processo encontrado com esses critérios." if q or active_filters else "Nenhum processo cadastrado ainda." }}</p>
+        <a href="{{ url_for('process_new') }}" class="btn btn-soft btn-sm">{{ icon('plus') }} Cadastrar processo</a>
+      </div>
+    </td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ pagination(page, total, 25, 'processos') }}
+{% endblock %}

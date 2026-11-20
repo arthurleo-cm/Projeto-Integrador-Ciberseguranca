@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block page_title %}Usuários{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h2>Equipe do escritório</h2><p>Operadores não veem dados financeiros nem podem excluir registros.</p></div>
+  <div class="page-actions"><a href="{{ url_for('user_new') }}" class="btn">{{ icon('plus') }} Novo usuário</a></div>
+</div>
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Nome</th><th class="hide-sm">E-mail</th><th>Perfil</th><th>Situação</th><th></th></tr></thead>
+    <tbody>
+    {% for u in users %}
+    <tr>
+      <td><span class="title">{{ u.nome }}{% if u.id_usuario == current_user.id_usuario %} <small>(você)</small>{% endif %}</span></td>
+      <td class="hide-sm">{{ u.email }}</td>
+      <td><span class="tag tag-plain {{ '' if u.perfil == 'ADMINISTRADOR' else 'tag-muted' }}">{{ "Administrador" if u.perfil == "ADMINISTRADOR" else "Operador" }}</span></td>
+      <td><span class="tag {{ '' if u.ativo else 'tag-danger' }}">{{ "Ativo" if u.ativo else "Inativo" }}</span></td>
+      <td class="actions"><a class="btn btn-secondary btn-sm row-link" href="{{ url_for('user_edit', user_id=u.id_usuario) }}">Editar</a></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

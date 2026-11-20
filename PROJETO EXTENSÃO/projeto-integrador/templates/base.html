@@ -1,0 +1,99 @@
+{% from "_icons.html" import icon %}
+{%- set prefs = current_user.preferencias if current_user else {} -%}
+<!doctype html>
+<html lang="pt-BR" data-tema="{{ prefs.get('tema', 'SISTEMA') }}"
+      class="{{ {'GRANDE': 'font-large', 'MUITO_GRANDE': 'font-xlarge'}.get(prefs.get('fonte'), '') }} {{ 'high-contrast' if prefs.get('alto_contraste') }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% block page_title %}Página não encontrada{% endblock %} — Marquezi Gestão{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+{% if current_user %}
+<input type="checkbox" id="menu-check" class="menu-check" aria-hidden="true" tabindex="-1">
+<div class="app">
+  <label for="menu-check" class="menu-overlay" aria-hidden="true"></label>
+  <aside class="sidebar" id="sidebar">
+    <div class="side-brand">
+      <div class="brand-mark">M</div>
+      <div><b>Marquezi</b><small>GESTÃO JURÍDICA</small></div>
+    </div>
+    {% set ep = request.endpoint or '' %}
+    <nav class="nav-group" aria-label="Principal">
+      <span class="nav-title">Escritório</span>
+      <a class="nav {{ 'active' if ep == 'dashboard_page' }}" href="{{ url_for('dashboard_page') }}">{{ icon('home') }} Visão geral</a>
+      <a class="nav {{ 'active' if ep.startswith('client') or ep.startswith('document') }}" href="{{ url_for('clients_page') }}">{{ icon('users') }} Clientes</a>
+      <a class="nav {{ 'active' if ep.startswith('process') or ep.startswith('receipt') }}" href="{{ url_for('processes_page') }}">{{ icon('briefcase') }} Processos</a>
+      {% if is_admin %}
+      <span class="nav-title">Administração</span>
+      <a class="nav {{ 'active' if ep.startswith('user') }}" href="{{ url_for('users_page') }}">{{ icon('team') }} Usuários</a>
+      <a class="nav {{ 'active' if ep == 'audit_page' }}" href="{{ url_for('audit_page') }}">{{ icon('shield') }} Auditoria</a>
+      {% endif %}
+      <span class="nav-title">Conta</span>
+      <a class="nav {{ 'active' if ep == 'account_page' }}" href="{{ url_for('account_page') }}">{{ icon('settings') }} Minha conta</a>
+    </nav>
+    <div class="sidebar-foot">
+      <p>Dados pessoais cifrados (AES-256-GCM). Toda ação fica registrada na auditoria.</p>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <label for="menu-check" class="btn btn-ghost btn-sm menu-toggle" title="Abrir menu">{{ icon('menu') }}<span class="sr-only">Abrir menu</span></label>
+        <span class="crumb">{% block crumb %}{{ self.page_title() }}{% endblock %}</span>
+      </div>
+      <div class="topbar-right">
+        <form method="post" action="{{ url_for('toggle_preference') }}" class="pref-buttons" aria-label="Aparência">
+          <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+          <input type="hidden" name="next" value="{{ request.full_path if request.query_string else request.path }}">
+          {% set tema = prefs.get('tema', 'SISTEMA') %}
+          <button class="btn btn-ghost" name="kind" value="theme" title="Tema: {{ {'SISTEMA':'automático','CLARO':'claro','ESCURO':'noturno'}[tema] }} (clique para alternar)">
+            {{ icon({'SISTEMA':'auto','CLARO':'sun','ESCURO':'moon'}[tema]) }}<span class="sr-only">Alternar tema</span>
+          </button>
+          <button class="btn btn-ghost" name="kind" value="font" title="Tamanho das letras: {{ {'NORMAL':'normal','GRANDE':'grande','MUITO_GRANDE':'muito grande'}.get(prefs.get('fonte'), 'normal') }}">
+            A<span class="hide-sm">{{ {'NORMAL':'','GRANDE':'+','MUITO_GRANDE':'++'}.get(prefs.get('fonte'), '') }}</span><span class="sr-only">Alternar tamanho da letra</span>
+          </button>
+          <button class="btn {{ 'btn-soft' if prefs.get('alto_contraste') else 'btn-ghost' }}" name="kind" value="contrast" title="Alto contraste" aria-pressed="{{ 'true' if prefs.get('alto_contraste') else 'false' }}">
+            {{ icon('contrast') }}<span class="sr-only">Alto contraste</span>
+          </button>
+        </form>
+        <div class="user-pill">
+          <span class="avatar">{{ current_user.nome[0] | upper }}</span>
+          <div>
+            <b>{{ current_user.nome }}</b>
+            <small>{{ "Administrador" if is_admin else "Operador" }}</small>
+          </div>
+          <form method="post" action="{{ url_for('logout') }}" class="inline-form">
+            <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+            <button type="submit" class="btn btn-ghost btn-sm" title="Sair">{{ icon('logout') }}<span class="hide-sm">Sair</span></button>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <main class="content" id="content">
+      {% if error %}
+      <div class="card empty">{{ icon('alert') }}<h3>{{ error }}</h3><p><a href="{{ url_for('dashboard_page') }}">Voltar à visão geral</a></p></div>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% else %}
+{% block public %}{% endblock %}
+{% endif %}
+
+{% if current_user %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+<div class="flash-stack" aria-live="polite">
+  {% for category, message in messages %}
+  <div class="flash {{ category }}" role="status"><p>{{ message }}</p></div>
+  {% endfor %}
+</div>
+{% endwith %}
+{% endif %}
+</body>
+</html>

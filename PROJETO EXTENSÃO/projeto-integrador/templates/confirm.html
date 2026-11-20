@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block page_title %}Confirmar exclusão{% endblock %}
+{% block content %}
+<div class="card form-narrow confirm-card">
+  <span class="stat-icon danger">{{ icon('trash') }}</span>
+  <h2>Tem certeza?</h2>
+  <p>{{ message }}</p>
+  <p class="muted">Essa ação não pode ser desfeita e ficará registrada na auditoria.</p>
+  <form method="post" action="{{ request.path }}" class="form-actions">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <input type="hidden" name="confirmado" value="1">
+    <a href="{{ back_url }}" class="btn btn-secondary">Cancelar</a>
+    <button type="submit" class="btn btn-danger">{{ icon('trash') }} Sim, excluir</button>
+  </form>
+</div>
+{% endblock %}

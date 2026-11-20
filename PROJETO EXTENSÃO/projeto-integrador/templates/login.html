@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Entrar — Marquezi Gestão{% endblock %}
+{% block public %}
+<div class="login-screen">
+  <div class="login-card">
+    <div class="brand-mark">M</div>
+    <p class="eyebrow">Advocacia Pedro Marquezi</p>
+    <h1>Marquezi <span>Gestão</span></h1>
+    <p class="muted">Acesso restrito à equipe do escritório.</p>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    <div class="flash {{ category }}" role="alert"><p>{{ message }}</p></div>
+    {% endfor %}
+    {% endwith %}
+    <form method="post" class="stack">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      <label>E-mail
+        <input name="email" type="email" autocomplete="username" maxlength="180" required autofocus placeholder="voce@escritorio.com.br">
+      </label>
+      <label>Senha
+        <input name="senha" type="password" autocomplete="current-password" maxlength="128" required>
+      </label>
+      <button type="submit" class="btn btn-block">Entrar</button>
+    </form>
+    <p class="login-foot muted">Depois da senha, enviamos um código de acesso para o seu e-mail. Após 10 tentativas erradas o acesso é bloqueado por 15 minutos.</p>
+  </div>
+</div>
+{% endblock %}

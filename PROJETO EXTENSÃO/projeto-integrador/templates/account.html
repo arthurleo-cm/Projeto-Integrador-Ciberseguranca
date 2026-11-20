@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block page_title %}Minha conta{% endblock %}
+{% block content %}
+{% set p = current_user.preferencias %}
+<div class="page-head">
+  <div><h2>Minha conta</h2><p>{{ current_user.nome }} · {{ current_user.email }}</p></div>
+</div>
+<div class="grid grid-2">
+  <form method="post" class="card">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <input type="hidden" name="action" value="preferences">
+    <div class="card-head"><div><h3>Aparência e acessibilidade</h3><p>Também dá para alternar pelos botões no topo da tela.</p></div></div>
+    <div class="stack">
+      <label>Tema
+        <select name="tema">
+          <option value="SISTEMA" {{ 'selected' if p.tema == 'SISTEMA' }}>Automático (segue o sistema)</option>
+          <option value="CLARO" {{ 'selected' if p.tema == 'CLARO' }}>Claro</option>
+          <option value="ESCURO" {{ 'selected' if p.tema == 'ESCURO' }}>Noturno</option>
+        </select>
+      </label>
+      <label>Tamanho das letras
+        <select name="fonte">
+          <option value="NORMAL" {{ 'selected' if p.fonte == 'NORMAL' }}>Normal</option>
+          <option value="GRANDE" {{ 'selected' if p.fonte == 'GRANDE' }}>Grande</option>
+          <option value="MUITO_GRANDE" {{ 'selected' if p.fonte == 'MUITO_GRANDE' }}>Muito grande</option>
+        </select>
+      </label>
+      <label class="check"><input type="checkbox" name="alto_contraste" {{ 'checked' if p.alto_contraste }}> Alto contraste</label>
+    </div>
+    <div class="form-actions"><button type="submit" class="btn">Salvar preferências</button></div>
+  </form>
+
+  <form method="post" class="card">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <input type="hidden" name="action" value="password">
+    <div class="card-head"><div><h3>Alterar senha</h3><p>Todas as sessões serão encerradas.</p></div></div>
+    <div class="stack">
+      <label>Senha atual<input name="atual" type="password" required maxlength="128" autocomplete="current-password"></label>
+      <label>Nova senha
+        <input name="nova" type="password" required minlength="12" maxlength="128" autocomplete="new-password">
+        <span class="hint">Mínimo de 12 caracteres.</span>
+      </label>
+      <label>Confirme a nova senha<input name="confirmacao" type="password" required minlength="12" maxlength="128" autocomplete="new-password"></label>
+    </div>
+    <div class="form-actions"><button type="submit" class="btn">Alterar senha</button></div>
+  </form>
+</div>
+{% endblock %}

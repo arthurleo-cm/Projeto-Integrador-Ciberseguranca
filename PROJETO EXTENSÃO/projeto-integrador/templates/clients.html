@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon, pagination with context %}
+{% block page_title %}Clientes{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h2>Clientes</h2><p>Pessoas físicas e jurídicas atendidas pelo escritório.</p></div>
+  <div class="page-actions"><a href="{{ url_for('client_new') }}" class="btn">{{ icon('plus') }} Novo cliente</a></div>
+</div>
+
+<form class="toolbar" method="get" role="search">
+  <label class="search">
+    {{ icon('search') }}
+    <span class="sr-only">Buscar</span>
+    <input name="q" value="{{ q }}" maxlength="180" placeholder="Buscar por nome, CPF ou CNPJ…">
+
+  </label>
+  <select name="situacao" aria-label="Situação">
+    <option value="">Todas as situações</option>
+    <option value="ativo" {{ 'selected' if situacao == 'ativo' }}>Somente ativos</option>
+    <option value="inativo" {{ 'selected' if situacao == 'inativo' }}>Somente inativos</option>
+  </select>
+  <button type="submit" class="btn">Buscar</button>
+  {% if q or situacao %}<a href="{{ url_for('clients_page') }}" class="btn btn-ghost">Limpar</a>{% endif %}
+</form>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Cliente</th><th>CPF/CNPJ</th><th class="num hide-sm">Processos</th><th>Situação</th><th class="hide-sm">Atualizado em</th><th></th></tr></thead>
+    <tbody>
+    {% for c in items %}
+    <tr>
+      <td><span class="title">{{ c.nome }}</span><small>{{ "Pessoa física" if c.tipo_pessoa == "PF" else "Pessoa jurídica" }}</small></td>
+      <td class="tabnum">{{ c.cpf_cnpj | mask_doc or "—" }}</td>
+      <td class="num hide-sm">{{ c.processos }}</td>
+      <td><span class="tag {{ '' if c.ativo else 'tag-muted' }}">{{ "Ativo" if c.ativo else "Inativo" }}</span></td>
+      <td class="hide-sm">{{ c.data_atualizacao | date_br }}</td>
+      <td class="actions"><a class="btn btn-secondary btn-sm row-link" href="{{ url_for('client_edit', client_id=c.id_cliente) }}">Abrir</a></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6">
+      <div class="empty">
+        {{ icon('users') }}
+        <p>{{ "Nenhum cliente encontrado para essa busca." if q or situacao else "Nenhum cliente cadastrado ainda." }}</p>
+        <a href="{{ url_for('client_new') }}" class="btn btn-soft btn-sm">{{ icon('plus') }} Cadastrar cliente</a>
+      </div>
+    </td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ pagination(page, total, 25, 'clientes') }}
+{% endblock %}

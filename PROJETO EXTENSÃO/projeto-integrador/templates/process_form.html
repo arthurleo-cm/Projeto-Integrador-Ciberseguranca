@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon, status_tag %}
+{% block page_title %}{{ "Processo #" ~ process.id_processo if process else "Novo processo" }}{% endblock %}
+{% block crumb %}<a href="{{ url_for('processes_page') }}">Processos</a> / {{ self.page_title() }}{% endblock %}
+
+{% macro associate_row(i, a) %}
+<fieldset class="repeat-row">
+  <div class="form-grid form-grid-3">
+    <label>Nome<input name="assoc_nome_{{ i }}" required maxlength="150" value="{{ a.nome or '' }}"></label>
+    <label>Papel
+      <select name="assoc_papel_{{ i }}">
+        {% for r, label in [("ADVOGADO","Advogado(a)"),("ESTAGIARIO","Estagiário(a)"),("PARTE","Parte"),("PERITO","Perito(a)"),("OUTRO","Outro")] %}
+        <option value="{{ r }}" {{ 'selected' if a.papel == r }}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label><span>OAB <span class="hint">(se houver)</span></span><input name="assoc_oab_{{ i }}" maxlength="10" placeholder="123456/SP" value="{{ a.oab or '' }}" data-mask="oab"></label>
+  </div>
+  <button type="submit" name="op" value="remove:assoc:{{ i }}" formnovalidate class="btn btn-danger-ghost btn-sm remove-row" title="Remover associado">{{ icon('x') }}<span class="sr-only">Remover associado</span></button>
+</fieldset>
+{% endmacro %}
+
+{% macro precedent_row(i, j) %}
+<fieldset class="repeat-row">
+  <div class="form-grid">
+    <label>Tribunal<input name="juris_tribunal_{{ i }}" required maxlength="60" placeholder="STJ, TJSP…" value="{{ j.tribunal or '' }}"></label>
+    <label>Referência<input name="juris_referencia_{{ i }}" required maxlength="180" placeholder="REsp 1.234.567/SP" value="{{ j.referencia or '' }}"></label>
+    <label class="span-2"><span>Link <span class="hint">(opcional)</span></span><input name="juris_url_{{ i }}" type="url" maxlength="500" placeholder="https://" value="{{ j.url or '' }}"></label>
+    <label class="span-2">Resumo ou ementa<textarea name="juris_resumo_{{ i }}" rows="2" maxlength="2000">{{ j.resumo or '' }}</textarea></label>
+  </div>
+  <button type="submit" name="op" value="remove:juris:{{ i }}" formnovalidate class="btn btn-danger-ghost btn-sm remove-row" title="Remover jurisprudência">{{ icon('x') }}<span class="sr-only">Remover jurisprudência</span></button>
+</fieldset>
+{% endmacro %}
+
+{% block content %}
+{% set p = process or {} %}
+{% set f = form %}
+<div class="page-head">
+  <div>
+    <h2>{{ p.titulo or "Novo processo" }}</h2>
+    {% if process %}
+    <p class="tabnum">#{{ p.id_processo }} · {{ p.numero_cnj | mask_cnj }} · {{ status_tag(p.status, p.situacao) }}
+      · <a href="{{ url_for('client_edit', client_id=p.id_cliente) }}">{{ p.cliente }}</a></p>
+    {% else %}
+    <p>Somente clientes ativos aparecem na lista.</p>
+    {% endif %}
+  </div>
+  <div class="page-actions">
+    <a href="{{ url_for('processes_page') }}" class="btn btn-secondary">{{ icon('arrow-left') }} Voltar</a>
+  </div>
+</div>
+
+{% if process %}
+<nav class="tabs" aria-label="Seções do processo">
+  <a href="#dados">Dados</a>
+  {% if is_admin %}<a href="#financeiro">Financeiro</a>{% endif %}
+  <a href="#anexos">Anexos <span class="badge">{{ arquivos | length }}</span></a>
+  <a href="#historico">Histórico</a>
+</nav>
+{% endif %}
+
+{% if not client_options %}
+<div class="callout warn">{{ icon('alert') }} <span>Cadastre (ou reative) um cliente antes de criar um processo. <a href="{{ url_for('client_new') }}">Novo cliente</a></span></div>
+{% else %}
+<form method="post" class="card" id="dados"
+      action="{{ url_for('process_edit', process_id=p.id_processo) if process else url_for('process_new') }}">
+  {# Primeiro botão de envio do formulário: é ele que o Enter aciona, e não "+ Adicionar". #}
+  <button type="submit" class="sr-only" tabindex="-1" aria-hidden="true">Salvar</button>
+  <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+  {% if process %}<input type="hidden" name="versao" value="{{ p.versao }}">{% endif %}
+
+  <div class="card-head"><h3>Dados principais</h3></div>
+  <div class="form-grid">
+    <label>Cliente
+      <select name="id_cliente" required>
+        {% for c in client_options %}
+        <option value="{{ c.id_cliente }}" {{ 'selected' if f.id_cliente == c.id_cliente | string }}>{{ c.nome }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Número oficial CNJ
+      <input name="numero_cnj" required inputmode="numeric" maxlength="25" data-mask="cnj" autocomplete="off"
+             value="{{ f.numero_cnj | mask_cnj if f.numero_cnj else '' }}" placeholder="0000000-00.0000.0.00.0000">
+      <span class="field-error" data-error></span>
+    </label>
+    <label class="span-2">Título ou resumo
+      <input name="titulo" required maxlength="180" value="{{ f.titulo or '' }}" placeholder="Ex.: Ação de cobrança contra Fulano">
+    </label>
+    <label>Ramo e tipificação
+      <select name="classificacao" required>
+        {% for ramo, tipos in PROCESS_TYPES.items() %}
+        <optgroup label="{{ ramo | code_label }}">
+          {% for t in tipos %}
+          <option value="{{ ramo }}:{{ t }}" {{ 'selected' if f.ramo == ramo and f.tipificacao == t }}>{{ ramo | code_label }} › {{ t | code_label }}</option>
+          {% endfor %}
+        </optgroup>
+        {% endfor %}
+      </select>
+    </label>
+    <label><span>Status <span class="hint">(Encerrado/Arquivado fecham o processo)</span></span>
+      <select name="status">
+        {% for s in PROCESS_STATUS %}<option value="{{ s }}" {{ 'selected' if (f.status or 'EM_ANALISE') == s }}>{{ s | code_label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Data de abertura
+      <input name="data_abertura" type="date" required max="{{ today }}" value="{{ f.data_abertura or today }}">
+    </label>
+    {% if is_admin %}
+    <label>Valor estimado (R$)
+      <input name="valor_estimado" type="number" min="0" step="0.01" value="{{ f.valor_estimado or '0.00' }}">
+    </label>
+    <label>Previsão de recebimento
+      <input name="previsao_recebimento" type="date" value="{{ f.previsao_recebimento or '' }}">
+    </label>
+    {% endif %}
+  </div>
+
+  <div class="subsection">
+    <div class="card-head"><h3>Publicação e órgão</h3></div>
+    <div class="form-grid">
+      <label>Órgão julgador<input name="orgao" maxlength="150" value="{{ f.orgao or '' }}" placeholder="2ª Vara Cível de Campinas"></label>
+      <label>Numeração da OAB<input name="numero_oab" maxlength="10" placeholder="123456/SP" value="{{ f.numero_oab or '' }}" data-mask="oab"></label>
+      <label>Data de disponibilização<input name="data_disponibilizacao" type="date" value="{{ f.data_disponibilizacao or '' }}"></label>
+      <label>Data de publicação<input name="data_publicacao" type="date" value="{{ f.data_publicacao or '' }}"></label>
+      <label>Última movimentação no tribunal<input name="ultima_movimentacao" type="date" value="{{ f.ultima_movimentacao or '' }}"></label>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="card-head"><h3>Intimação</h3></div>
+    <div class="form-grid">
+      <label>Data da intimação<input name="intimacao_data" type="date" value="{{ f.intimacao_data or '' }}"></label>
+      <label>Prazo (dias úteis)<input name="intimacao_prazo" type="number" min="0" max="365" step="1" value="{{ f.intimacao_prazo or '' }}" placeholder="Ex.: 15"></label>
+      <label class="span-2">Descrição<textarea name="intimacao_descricao" rows="2" maxlength="2000">{{ f.intimacao_descricao or '' }}</textarea></label>
+    </div>
+    {% if deadline %}
+    {% set d = deadline.dias %}
+    <div class="callout {{ 'danger' if d <= 0 else 'warn' if d <= 3 }}">{{ icon('clock') }}
+      <span>Vencimento: <b>{{ deadline.final | date_br }}</b> —
+      {% if d < 0 %}vencido há {{ -d }} dia{{ 's' if d < -1 }}{% elif d == 0 %}vence hoje{% else %}faltam {{ d }} dia{{ 's' if d > 1 }} corridos{% endif %}.
+      <span class="hint">(dias úteis, sem feriados)</span></span>
+    </div>
+    {% else %}
+    <div class="callout">{{ icon('clock') }} <span>Informe a data e o prazo e salve para calcular o vencimento.</span></div>
+    {% endif %}
+  </div>
+
+  <div class="subsection">
+    <div class="card-head">
+      <h3>Associados</h3>
+      <button type="submit" name="op" value="add:assoc" formnovalidate class="btn btn-soft btn-sm">{{ icon('plus') }} Adicionar associado</button>
+    </div>
+    <div class="repeat-list">
+      {% for a in associados %}{{ associate_row(loop.index0, a) }}{% else %}<div class="empty-rows">Nenhum advogado, parte ou perito associado.</div>{% endfor %}
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="card-head">
+      <h3>Jurisprudência</h3>
+      <button type="submit" name="op" value="add:juris" formnovalidate class="btn btn-soft btn-sm">{{ icon('plus') }} Adicionar jurisprudência</button>
+    </div>
+    <div class="repeat-list">
+      {% for j in jurisprudencia %}{{ precedent_row(loop.index0, j) }}{% else %}<div class="empty-rows">Nenhuma jurisprudência registrada.</div>{% endfor %}
+    </div>
+  </div>
+
+  <div class="subsection">
+    <label>Observações<textarea name="observacoes" rows="4" maxlength="10000">{{ f.observacoes or '' }}</textarea></label>
+  </div>
+
+  <div class="form-actions">
+    <span class="muted">{{ "Adicionar ou remover linhas não salva; clique em \"Salvar processo\"." if is_admin else "Informações financeiras são restritas a administradores." }}</span>
+    <a href="{{ url_for('process_edit', process_id=p.id_processo) if process else url_for('processes_page') }}" class="btn btn-ghost">Cancelar</a>
+    <button type="submit" class="btn">Salvar processo</button>
+  </div>
+</form>
+{% endif %}
+
+{% if process %}
+{% if is_admin %}
+<section class="section" id="financeiro">
+  <div class="card-head"><h3>Financeiro</h3></div>
+  <div class="grid grid-4">
+    <div class="card stat"><span class="stat-label">Estimado</span><span class="stat-value sm">{{ p.valor_estimado_centavos | money }}</span></div>
+    <div class="card stat"><span class="stat-label">Recebido</span><span class="stat-value sm">{{ p.valor_recebido_centavos | money }}</span></div>
+    <div class="card stat"><span class="stat-label">Saldo</span><span class="stat-value sm">{{ p.saldo_centavos | money }}</span></div>
+    <div class="card stat">
+      <span class="stat-label">Situação do pagamento</span>
+      {% set sp = p.status_pagamento %}
+      <span><span class="tag {{ {'SEM_VALOR':'tag-muted','PENDENTE':'tag-danger','PARCIAL':'tag-warn','QUITADO':'tag-ok'}[sp] }}">{{ sp | code_label }}</span></span>
+      <small>{{ "Previsão: " ~ (p.previsao_recebimento | date_br) if p.previsao_recebimento else "Sem previsão informada" }}</small>
+      {% if p.valor_estimado_centavos %}<div class="meter ok"><span class="w-{{ p.pct_recebido | step5 }}"></span></div>{% endif %}
+    </div>
+  </div>
+  <div class="card mt">
+    <form method="post" action="{{ url_for('receipt_new', process_id=p.id_processo) }}">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      <div class="upload-box">
+        <label>Valor recebido (R$)<input name="valor" type="number" required min="0.01" step="0.01" placeholder="0,00"></label>
+        <label>Data do recebimento<input name="data_recebimento" type="date" required max="{{ today }}" value="{{ today }}"></label>
+        <button type="submit" class="btn">{{ icon('plus') }} Registrar</button>
+        <label class="span-all"><span>Observação <span class="hint">(opcional)</span></span><input name="observacao" maxlength="1000" placeholder="Ex.: 2ª parcela dos honorários"></label>
+      </div>
+    </form>
+    <div class="list mt">
+      {% for r in recebimentos %}
+      <div class="list-item">
+        <span class="file-icon money">R$</span>
+        <span class="grow"><b class="tabnum">{{ r.valor_centavos | money }}</b><small>{{ r.data_recebimento | date_br }}{% if r.observacao %} · {{ r.observacao }}{% endif %}</small></span>
+        <form method="post" class="inline-form" action="{{ url_for('receipt_delete', receipt_id=r.id_recebimento) }}">
+          <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+          <button type="submit" class="btn btn-danger-ghost btn-sm" title="Excluir">{{ icon('trash') }}</button>
+        </form>
+      </div>
+      {% else %}
+      <p class="muted">Nenhum recebimento registrado.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="section" id="anexos">
+  <div class="card-head"><div><h3>Fotos e documentos</h3><p>PDF, JPEG, PNG ou WebP até 10 MB · fotos são reprocessadas para remover metadados</p></div></div>
+  <div class="card">
+    <form method="post" enctype="multipart/form-data" action="{{ url_for('process_file_upload', process_id=p.id_processo) }}">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      <div class="upload-box">
+        <label>Título<input name="titulo" required maxlength="150" placeholder="Ex.: Petição inicial"></label>
+        <label>Arquivo<input name="arquivo" type="file" required accept="application/pdf,image/jpeg,image/png,image/webp"></label>
+        <button type="submit" class="btn">{{ icon('upload') }} Enviar</button>
+      </div>
+    </form>
+
+    {% set photos = arquivos | selectattr('categoria', 'equalto', 'FOTO') | list %}
+    {% set docs = arquivos | selectattr('categoria', 'equalto', 'DOCUMENTO') | list %}
+    {% if photos %}
+    <div class="gallery">
+      {% for a in photos %}
+      <article class="photo-card">
+        <a href="{{ url_for('process_file_download', file_id=a.id_arquivo) }}" title="Baixar original">
+          <img src="{{ url_for('process_file_preview', file_id=a.id_arquivo) }}" alt="{{ a.titulo }}" loading="lazy">
+        </a>
+        <div>
+          <span class="grow"><b>{{ a.titulo }}</b><small>{{ "%.1f" | format(a.tamanho_bytes / 1024) }} KB</small></span>
+          <span class="row-actions">
+            <a class="btn btn-ghost btn-sm" href="{{ url_for('process_file_download', file_id=a.id_arquivo) }}" title="Baixar">{{ icon('download') }}</a>
+            {% if is_admin %}
+            <form method="post" class="inline-form" action="{{ url_for('process_file_delete', file_id=a.id_arquivo) }}">
+              <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+              <button type="submit" class="btn btn-danger-ghost btn-sm" title="Excluir">{{ icon('trash') }}</button>
+            </form>
+            {% endif %}
+          </span>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <div class="list mt">
+      {% for a in docs %}
+      <div class="list-item">
+        <span class="file-icon">PDF</span>
+        <span class="grow"><b>{{ a.titulo }}</b><small>{{ a.nome_original }} · {{ "%.1f" | format(a.tamanho_bytes / 1024) }} KB · {{ a.data_envio | date_br }}</small></span>
+        <span class="row-actions">
+          <a class="btn btn-ghost btn-sm" href="{{ url_for('process_file_download', file_id=a.id_arquivo) }}" title="Baixar">{{ icon('download') }}</a>
+          {% if is_admin %}
+          <form method="post" class="inline-form" action="{{ url_for('process_file_delete', file_id=a.id_arquivo) }}">
+            <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+            <button type="submit" class="btn btn-danger-ghost btn-sm" title="Excluir">{{ icon('trash') }}</button>
+          </form>
+          {% endif %}
+        </span>
+      </div>
+      {% else %}
+      {% if not photos %}<div class="empty">{{ icon('folder') }}<p>Nenhum anexo enviado.</p></div>{% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section" id="historico">
+  <div class="card-head"><h3>Histórico</h3><small>Cadastrado em {{ p.data_cadastro | date_br }} · última atualização {{ p.data_atualizacao | date_br }}</small></div>
+  <div class="card">
+    <ul class="timeline">
+      {% for h in historico %}
+      <li>
+        <b>{{ h.evento | code_label }}</b>
+        <small>{{ h.usuario }} · {{ h.data_hora | date_br }}
+        {% if h.status_anterior and h.status_anterior != h.status_atual %} · {{ h.status_anterior | code_label }} → {{ h.status_atual | code_label }}{% endif %}</small>
+      </li>
+      {% else %}
+      <li><b>Nenhuma movimentação registrada.</b></li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+
+{% if is_admin %}
+<div class="danger-zone">
+  <div><b>Excluir processo</b><p class="muted">Remova recebimentos e anexos antes de excluir.</p></div>
+  <form method="post" class="inline-form" action="{{ url_for('process_delete', process_id=p.id_processo) }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <button type="submit" class="btn btn-danger">{{ icon('trash') }} Excluir processo</button>
+  </form>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

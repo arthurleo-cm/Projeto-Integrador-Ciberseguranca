@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block page_title %}{{ "Editar usuário" if user else "Novo usuário" }}{% endblock %}
+{% block crumb %}<a href="{{ url_for('users_page') }}">Usuários</a> / {{ self.page_title() }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h2>{{ user.nome if user else "Novo usuário" }}</h2><p>{{ user.email if user else "O e-mail será usado para entrar no sistema." }}</p></div>
+  <div class="page-actions"><a href="{{ url_for('users_page') }}" class="btn btn-secondary">{{ icon('arrow-left') }} Voltar</a></div>
+</div>
+<form method="post" class="card form-narrow" action="{{ url_for('user_edit', user_id=user.id_usuario) if user else url_for('user_new') }}">
+  <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+  <div class="stack">
+    <label>Nome<input name="nome" required maxlength="150" value="{{ user.nome if user else '' }}"></label>
+    <label>E-mail<input name="email" type="email" required maxlength="180" autocomplete="off" value="{{ user.email if user else '' }}"></label>
+    <label>Perfil
+      <select name="perfil">
+        <option value="OPERADOR" {{ 'selected' if not user or user.perfil == 'OPERADOR' }}>Operador — cadastra e consulta</option>
+        <option value="ADMINISTRADOR" {{ 'selected' if user and user.perfil == 'ADMINISTRADOR' }}>Administrador — acesso total</option>
+      </select>
+    </label>
+    <label><span>{{ "Nova senha" if user else "Senha inicial" }} {% if user %}<span class="hint">(deixe em branco para manter)</span>{% endif %}</span>
+        <input name="senha" type="password" {{ '' if user else 'required' }} minlength="12" maxlength="128" autocomplete="new-password">
+      <span class="hint">Mínimo de 12 caracteres. Misture letras, números e símbolos.</span>
+    </label>
+    <label class="check"><input type="checkbox" name="ativo" {{ 'checked' if not user or user.ativo }}> Conta ativa</label>
+  </div>
+  <div class="callout">{{ icon('shield') }} <span>Salvar alterações encerra todas as sessões abertas deste usuário.</span></div>
+  <div class="form-actions">
+    <a href="{{ url_for('users_page') }}" class="btn btn-ghost">Cancelar</a>
+    <button type="submit" class="btn">Salvar usuário</button>
+  </div>
+</form>
+{% endblock %}

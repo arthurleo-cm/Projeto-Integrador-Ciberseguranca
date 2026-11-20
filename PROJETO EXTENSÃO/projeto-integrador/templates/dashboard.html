@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon, status_tag, deadline_tag %}
+{% block page_title %}Visão geral{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2>{{ saudacao }}, {{ current_user.nome.split(' ')[0] }}.</h2>
+    {% set vencidos = prazos | selectattr('dias_restantes', 'lt', 0) | list | length %}
+    {% set urgentes = prazos | selectattr('dias_restantes', 'le', 5) | list | length %}
+    <p>
+      {% if not prazos %}Nenhuma intimação com prazo em aberto.
+      {% elif vencidos %}{{ vencidos }} prazo{{ 's vencidos' if vencidos > 1 else ' vencido' }} e {{ urgentes - vencidos }} nos próximos 5 dias.
+      {% elif urgentes %}{{ urgentes }} prazo{{ 's vencem' if urgentes > 1 else ' vence' }} nos próximos 5 dias.
+      {% else %}Nenhum prazo vence nos próximos 5 dias.{% endif %}
+    </p>
+  </div>
+  <div class="page-actions">
+    <a href="{{ url_for('client_new') }}" class="btn btn-secondary">{{ icon('plus') }} Novo cliente</a>
+    <a href="{{ url_for('process_new') }}" class="btn">{{ icon('plus') }} Novo processo</a>
+  </div>
+</div>
+
+<div class="grid grid-4">
+  <a class="card stat" href="{{ url_for('clients_page') }}">
+    <span class="stat-icon">{{ icon('users') }}</span>
+    <span class="stat-label">Clientes cadastrados</span>
+    <span class="stat-value">{{ stats.clientes }}</span>
+    <small>{{ stats.ativos }} ativos</small>
+  </a>
+  <a class="card stat" href="{{ url_for('processes_page', situacao='ATIVO') }}">
+    <span class="stat-icon">{{ icon('briefcase') }}</span>
+    <span class="stat-label">Processos ativos</span>
+    <span class="stat-value">{{ stats.processos_ativos }}</span>
+    <small>{{ stats.processos }} no total</small>
+  </a>
+  <div class="card stat">
+    <span class="stat-icon">{{ icon('trend') }}</span>
+    <span class="stat-label">Novos em 30 dias</span>
+    <span class="stat-value">{{ stats.novos_30_dias }}</span>
+    <small>{{ stats.documentos }} documentos guardados</small>
+  </div>
+  <div class="card stat {{ 'stat-warn' if stats.sem_atualizacao }}">
+    <span class="stat-icon">{{ icon('clock') }}</span>
+    <span class="stat-label">Sem atualização há 30 dias</span>
+    <span class="stat-value">{{ stats.sem_atualizacao }}</span>
+    <small>{{ 'Vale revisar esses processos' if stats.sem_atualizacao else 'Tudo em dia' }}</small>
+  </div>
+</div>
+
+<div class="grid grid-5-3-2 mt">
+  <section class="card">
+    <div class="card-head">
+      <div><h3>Prazos de intimações</h3><p>Dias úteis, sem considerar feriados</p></div>
+    </div>
+    {% if prazos %}
+    <div class="list">
+      {% for p in prazos %}
+      <a class="list-item" href="{{ url_for('process_edit', process_id=p.id_processo) }}">
+        <span class="grow">
+          <b>{{ p.titulo }}</b>
+          <small>{{ p.cliente }}{% if p.orgao %} · {{ p.orgao }}{% endif %} · até {{ p.prazo_final | date_br }}</small>
+        </span>
+        {{ deadline_tag(p.dias_restantes) }}
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty">
+      {{ icon('clock') }}
+      <p>Informe a data da intimação e o prazo em um processo para acompanhá-lo aqui.</p>
+      <a href="{{ url_for('process_new') }}" class="btn btn-soft btn-sm">Cadastrar processo</a>
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <div class="card-head"><div><h3>Processos abertos por mês</h3><p>Últimos 6 meses</p></div></div>
+    {% if meses | sum(attribute='total') %}
+    <div class="bars">
+      {% for m in meses %}
+      <div class="bar-col">
+        <b>{{ m.total }}</b>
+        <div class="bar h-{{ m.pct | step5 }}"></div>
+        <small>{{ m.label }}</small>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty">{{ icon('trend') }}<p>Nenhum processo aberto nos últimos 6 meses.</p></div>
+    {% endif %}
+  </section>
+</div>
+
+<div class="grid grid-2 mt">
+  <section class="card">
+    <div class="card-head"><h3>Por ramo do Direito</h3></div>
+    {% for r in ramos %}
+    <a class="hbar" href="{{ url_for('processes_page', ramo=r.ramo) }}">
+      <div class="hbar-head"><span>{{ r.ramo | code_label }}</span><b class="tabnum">{{ r.total }}</b></div>
+      <div class="meter"><span class="w-{{ r.pct | step5 }}"></span></div>
+    </a>
+    {% else %}
+    <div class="empty"><p>Nenhum processo cadastrado.</p></div>
+    {% endfor %}
+  </section>
+  <section class="card">
+    <div class="card-head"><h3>Movimentados recentemente</h3><a href="{{ url_for('processes_page') }}">Ver todos</a></div>
+    <div class="list">
+      {% for p in recentes %}
+      <a class="list-item" href="{{ url_for('process_edit', process_id=p.id_processo) }}">
+        <span class="grow"><b>{{ p.titulo }}</b><small>{{ p.cliente }} · {{ p.data_atualizacao | date_br }}</small></span>
+        {{ status_tag(p.status) }}
+      </a>
+      {% else %}
+      <div class="empty"><p>Sem movimentações.</p></div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+{% if is_admin and stats.estimado is defined %}
+<div class="grid grid-2 mt">
+  <div class="card stat">
+    <span class="stat-label">Recebido do estimado</span>
+    <span class="stat-value sm">{{ stats.recebido | money }}</span>
+    <small>de {{ stats.estimado | money }}</small>
+    {% set pct = ((stats.recebido / stats.estimado * 100) | round | int) if stats.estimado else 0 %}
+    <div class="meter ok"><span class="w-{{ [pct, 100] | min | step5 }}"></span></div>
+  </div>
+  <div class="card stat">
+    <span class="stat-label">Saldo a receber</span>
+    <span class="stat-value sm">{{ (stats.estimado - stats.recebido) | money }}</span>
+    <small>Somatório de todos os processos</small>
+  </div>
+</div>
+{% endif %}
+
+{% if por_status %}
+<section class="card mt">
+  <div class="card-head"><h3>Processos por status</h3></div>
+  <div class="grid grid-4">
+    {% for s in por_status %}
+    <a class="list-item" href="{{ url_for('processes_page', status=s.status) }}">
+      <span class="grow">{{ status_tag(s.status) }}</span><b class="tabnum">{{ s.total }}</b>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

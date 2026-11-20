@@ -21,7 +21,7 @@ Token API: COLE_O_TOKEN_AQUI
 Depois execute:
 
 ```sh
-npm run dns:configure
+python manage.py dns
 ```
 
 O comando detecta o IPv4 público, não imprime credenciais e se recusa a
@@ -33,8 +33,8 @@ Se o servidor possuir IPv6 público fixo e firewall corretamente configurado,
 adicione também um registro `AAAA`. Não publique um IPv6 que não aceite as
 portas 80 e 443.
 
-No servidor, libere TCP 80/443 para o Caddy e mantenha a porta 3000 vinculada
-apenas a `127.0.0.1`. Inicie a aplicação com `deploy/production.env.example`
+No servidor, libere TCP 80/443 para o Caddy e mantenha a porta 5000 vinculada
+apenas a `127.0.0.1`. Inicie a aplicação (`python app.py`) com `deploy/production.env.example`
 adaptado e o Caddy com:
 
 ```sh

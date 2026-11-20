@@ -1,0 +1,51 @@
+{% macro icon(name) -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+{%- if name == 'home' %}<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>
+{%- elif name == 'users' %}<circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M16 4a4 4 0 0 1 0 8"/><path d="M22 21a7 7 0 0 0-4-6.3"/>
+{%- elif name == 'briefcase' %}<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 13h18"/>
+{%- elif name == 'team' %}<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>
+{%- elif name == 'shield' %}<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/>
+{%- elif name == 'settings' %}<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>
+{%- elif name == 'search' %}<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+{%- elif name == 'plus' %}<path d="M12 5v14M5 12h14"/>
+{%- elif name == 'x' %}<path d="M18 6 6 18M6 6l12 12"/>
+{%- elif name == 'menu' %}<path d="M4 6h16M4 12h16M4 18h16"/>
+{%- elif name == 'logout' %}<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>
+{%- elif name == 'download' %}<path d="M12 3v12m0 0-4-4m4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+{%- elif name == 'trash' %}<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>
+{%- elif name == 'clock' %}<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+{%- elif name == 'alert' %}<path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>
+{%- elif name == 'trend' %}<path d="m3 17 6-6 4 4 8-8"/><path d="M14 7h7v7"/>
+{%- elif name == 'folder' %}<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+{%- elif name == 'sun' %}<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+{%- elif name == 'moon' %}<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+{%- elif name == 'auto' %}<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>
+{%- elif name == 'type' %}<path d="M4 7V5h16v2M9 19h6M12 5v14"/>
+{%- elif name == 'contrast' %}<circle cx="12" cy="12" r="9"/><path d="M12 3v18"/><path d="M12 7h5M12 11h7M12 15h6"/>
+{%- elif name == 'upload' %}<path d="M12 15V3m0 0-4 4m4-4 4 4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+{%- elif name == 'arrow-left' %}<path d="M19 12H5m0 0 6-6m-6 6 6 6"/>
+{%- elif name == 'eye' %}<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>
+{%- elif name == 'filter' %}<path d="M3 5h18l-7 8v6l-4 2v-8z"/>
+{%- endif -%}
+</svg>
+{%- endmacro %}
+
+{% macro status_tag(status, situacao='ATIVO') -%}
+{%- set tone = {'EM_ANALISE':'tag-warn','AGUARDANDO_AUDIENCIA':'tag-warn','AGUARDANDO_DECISAO':'tag-warn','SUSPENSO':'tag-danger','EM_RECURSO':'tag-ok','ENCERRADO':'tag-muted','ARQUIVADO':'tag-muted'}.get(status, '') -%}
+<span class="tag {{ 'tag-muted' if situacao != 'ATIVO' else tone }}">{{ status | code_label }}</span>
+{%- endmacro %}
+
+{% macro deadline_tag(n) -%}
+{%- if n < 0 %}<span class="tag tag-danger">Vencido há {{ -n }} dia{{ 's' if n < -1 }}</span>
+{%- elif n == 0 %}<span class="tag tag-danger">Vence hoje</span>
+{%- elif n <= 3 %}<span class="tag tag-warn">{{ n }} dia{{ 's' if n > 1 }}</span>
+{%- else %}<span class="tag">{{ n }} dias</span>{% endif -%}
+{%- endmacro %}
+
+{% macro pagination(page, total, per_page, noun) -%}
+<nav class="pagination" aria-label="Paginação">
+  <a class="btn btn-secondary btn-sm" href="{{ page_url(page - 1) }}" {% if page <= 1 %}aria-disabled="true" tabindex="-1"{% endif %}>‹ Anterior</a>
+  <span>{{ total }} {{ noun }} · Página {{ page }} de {{ [((total + per_page - 1) // per_page), 1] | max }}</span>
+  <a class="btn btn-secondary btn-sm" href="{{ page_url(page + 1) }}" {% if page * per_page >= total %}aria-disabled="true" tabindex="-1"{% endif %}>Próxima ›</a>
+</nav>
+{%- endmacro %}
