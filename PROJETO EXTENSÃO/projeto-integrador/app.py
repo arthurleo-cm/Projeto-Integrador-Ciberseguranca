@@ -225,7 +225,9 @@ def security_headers(response):
     h = response.headers
     h["X-Content-Type-Options"] = "nosniff"
     h["X-Frame-Options"] = "DENY"
-    h["Referrer-Policy"] = "no-referrer"
+    # "same-origin": nada vaza para outros sites, mas o navegador informa a origem correta nos
+    # formulários do próprio sistema ("no-referrer" faria todo POST chegar com Origin: null).
+    h["Referrer-Policy"] = "same-origin"
     h["X-Robots-Tag"] = "noindex, nofollow, noarchive, nosnippet"
     h["Cross-Origin-Opener-Policy"] = "same-origin"
     h["Cross-Origin-Embedder-Policy"] = "require-corp"

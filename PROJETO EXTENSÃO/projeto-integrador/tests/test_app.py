@@ -115,6 +115,8 @@ class TestAuth(Base):
             self.assertIn(h, r.headers)
         self.assertIn("SameSite=Strict", r.headers.get("Set-Cookie", ""))
         self.assertIn("HttpOnly", r.headers.get("Set-Cookie", ""))
+        # "no-referrer" faz o navegador mandar Origin: null nos formulários, e o login seria recusado.
+        self.assertEqual(r.headers["Referrer-Policy"], "same-origin")
 
     def test_metodo_nao_permitido(self):
         self.assertEqual(self.client().put("/login").status_code, 405)

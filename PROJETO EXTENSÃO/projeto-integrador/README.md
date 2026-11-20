@@ -102,7 +102,7 @@ A auditoria registra inclusões, alterações, exclusões, login, logout, consul
 - **Validação no servidor:** CPF/CNPJ e CNJ com dígitos verificadores, datas, contatos, valores em centavos, caracteres de controle e versões de edição.
 - **Injeção e XSS:** consultas SQL parametrizadas, escape automático do Jinja e CSP sem scripts, estilos ou eventos inline.
 - **Criptografia em repouso:** AES-256-GCM com nonce aleatório e contexto autenticado por tipo de dado.
-- **Cabeçalhos:** CSP fechada por padrão, HSTS (em HTTPS), COOP, COEP e CORP, `Referrer-Policy: no-referrer`, anti-iframe, `nosniff`, Permissions-Policy, bloqueio de indexação e `Cache-Control: no-store` nas páginas.
+- **Cabeçalhos:** CSP fechada por padrão, HSTS (em HTTPS), COOP, COEP e CORP, `Referrer-Policy: same-origin` (nada é enviado a outros sites), anti-iframe, `nosniff`, Permissions-Policy, bloqueio de indexação e `Cache-Control: no-store` nas páginas.
 - **Rede:** validação do `Host` (421 se não bater), redirecionamento para HTTPS, aceitação só dos métodos GET, HEAD e POST, e limite de 10,5 MB por requisição aplicado antes de ler o envio.
 - **SSRF:** o servidor nunca busca URLs informadas por usuários. O único tráfego externo, o SMTP, só conecta em IPs públicos: endereços locais, privados ou reservados e respostas DNS mistas são recusados, e a conexão é fixada no IP validado, mantendo o nome original para conferir o certificado TLS.
 - **Arquivos do sistema:** `data/` com permissão 700, chave e banco com 600. A chave privada TLS é recusada se outros usuários puderem lê-la.
