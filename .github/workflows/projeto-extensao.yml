@@ -1,0 +1,83 @@
+# Pipeline de integração contínua do Marquezi Gestão (PROJETO EXTENSÃO/projeto-integrador).
+# Build, depois SAST, testes e DAST em paralelo. Roda a cada push e pull request que mexa no
+# projeto, todo dia de manhã (para pegar falhas novas mesmo sem commits) e sob demanda.
+name: CI - Projeto Extensão
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "PROJETO EXTENSÃO/projeto-integrador/**"
+      - ".github/workflows/projeto-extensao.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "PROJETO EXTENSÃO/projeto-integrador/**"
+      - ".github/workflows/projeto-extensao.yml"
+  schedule:
+    - cron: "0 9 * * *"  # todo dia às 09:00 UTC (06:00 em Brasília)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: projeto-extensao-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: "PROJETO EXTENSÃO/projeto-integrador"
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar dependências
+        run: make install
+      - name: Conferir que o código compila
+        run: make build
+
+  sast:
+    name: SAST
+    runs-on: ubuntu-24.04
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - name: Instalar o Semgrep
+        run: pipx install semgrep==1.182.1
+      - name: Rodar o SAST
+        run: make sast
+
+  tests:
+    name: Tests
+    runs-on: ubuntu-24.04
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar dependências
+        run: make install
+      - name: Rodar os testes
+        run: make test
+
+  dast:
+    name: DAST
+    runs-on: ubuntu-24.04
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar dependências
+        run: make install
+      - name: Rodar o DAST
+        run: make dast

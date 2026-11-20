@@ -73,21 +73,26 @@ def cmd_setup(args):
     import crypto_utils
     from validators import validate_password, ValidationError
     crypto_utils.load_key(str(KEY_PATH))
-    print("\nCrie a conta do primeiro administrador. O e-mail precisa receber mensagens: é para ele que vai o código de acesso.\n")
-    nome = input("Nome completo: ").strip()
+    # Uso automatizado (ex.: pipeline do GitHub Actions): ADMIN_NOME, ADMIN_EMAIL e ADMIN_SENHA.
+    automatico = all(os.environ.get(v) for v in ("ADMIN_NOME", "ADMIN_EMAIL", "ADMIN_SENHA"))
+    if not automatico:
+        print("\nCrie a conta do primeiro administrador. O e-mail precisa receber mensagens: é para ele que vai o código de acesso.\n")
+    nome = (os.environ["ADMIN_NOME"] if automatico else input("Nome completo: ")).strip()
     if len(nome) < 2:
         fail("Nome deve ter ao menos 2 caracteres.")
-    email = input("E-mail: ").strip().lower()
+    email = (os.environ["ADMIN_EMAIL"] if automatico else input("E-mail: ")).strip().lower()
     if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email):
         fail("E-mail inválido.")
     while True:
-        senha = getpass.getpass("Senha (mínimo 12 caracteres, entrada oculta): ")
+        senha = os.environ["ADMIN_SENHA"] if automatico else getpass.getpass("Senha (mínimo 12 caracteres, entrada oculta): ")
         try:
             validate_password(senha)
         except ValidationError as e:
+            if automatico:
+                fail(str(e))
             print(f"  {e}")
             continue
-        if getpass.getpass("Confirme a senha: ") != senha:
+        if not automatico and getpass.getpass("Confirme a senha: ") != senha:
             print("  As senhas não correspondem.")
             continue
         break

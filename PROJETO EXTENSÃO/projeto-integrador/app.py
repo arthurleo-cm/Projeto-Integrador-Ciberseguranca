@@ -502,8 +502,9 @@ def login():
 
     db = get_db()
     now = _now_ms()
-    for table in ("tentativas", "sessoes", "desafios_mfa"):
-        db.execute(f"DELETE FROM {table} WHERE expira < ?", (now,))
+    db.execute("DELETE FROM tentativas WHERE expira < ?", (now,))
+    db.execute("DELETE FROM sessoes WHERE expira < ?", (now,))
+    db.execute("DELETE FROM desafios_mfa WHERE expira < ?", (now,))
     db.commit()
 
     try:
@@ -757,10 +758,10 @@ def clients_page():
     q = request.args.get("q", "").strip().lower()[:180]
     situacao = request.args.get("situacao", "")
     page = int_arg("page", 1, 1, 100000)
-    sql = "SELECT * FROM clientes"
-    if situacao in ("ativo", "inativo"):
-        sql += " WHERE ativo=" + ("1" if situacao == "ativo" else "0")
-    rows = db.execute(sql + " ORDER BY id_cliente DESC").fetchall()
+    ativo = {"ativo": 1, "inativo": 0}.get(situacao, -1)
+    rows = db.execute(
+        "SELECT * FROM clientes WHERE (? = -1 OR ativo = ?) ORDER BY id_cliente DESC", (ativo, ativo)
+    ).fetchall()
     n_proc = dict(db.execute("SELECT id_cliente, count(*) FROM processos GROUP BY id_cliente").fetchall())
     q_digits = re.sub(r"\D", "", q)
     items = []
@@ -1710,7 +1711,8 @@ def toggle_preference():
     db.execute("UPDATE usuarios SET dados=? WHERE id_usuario=?", (pack(data, "usuario"), g.user["id_usuario"]))
     db.commit()
     nxt = request.form.get("next", "")
-    if not nxt.startswith("/") or nxt.startswith("//"):
+    # Só caminhos internos: começa com uma única "/" e não tem "\" (navegadores tratam "/\x" como "//x").
+    if not re.fullmatch(r"/(?![/\\])[^\\\s]*", nxt):
         nxt = url_for("dashboard_page")
     return redirect(nxt)
 

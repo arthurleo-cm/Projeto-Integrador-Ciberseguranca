@@ -55,9 +55,33 @@ O comando grava `data/smtp.env` com permissão só para o dono, e o `app.py` car
 | `python manage.py backup /pasta/nova` | Copia o banco (backup consistente do SQLite) e a chave de cifragem |
 | `python manage.py demo --confirm-demo-data` | Cria 3 operadores, 5 clientes e 3 processos fictícios |
 | `python manage.py dns` | Cria o registro DNS na Name.com (veja `deploy/DNS.md`) |
-| `python -m unittest discover tests` | Roda os testes automatizados |
 
 O comando `demo` é idempotente, cria só usuários com perfil `OPERADOR` e gera senhas fortes diferentes, mostradas uma única vez. Os e-mails `.example` não recebem mensagens; para entrar com eles use `MFA_MODE=console`. Não use a base de demonstração para dados reais.
+
+Para automação, o `setup` também aceita o primeiro administrador pelas variáveis `ADMIN_NOME`, `ADMIN_EMAIL` e `ADMIN_SENHA`, sem perguntas no terminal.
+
+## Verificações de segurança (SAST, testes e DAST)
+
+```sh
+make build             # confere que todo o código Python compila
+make sast              # SAST com o Semgrep e as regras em .semgrep/
+make test              # testes automatizados (unittest)
+make dast              # DAST com casos hostis contra o sistema rodando
+make                   # tudo acima, em sequência
+```
+
+- **SAST** (análise estática): o Semgrep 1.182.1 lê o código sem executá-lo, com as 14 regras de `.semgrep/python-rules.yml`. Elas procuram SQL montado com texto, modo debug, chave secreta no código, hash fraco, `random` em segredos, comandos de shell, `eval`, desserialização insegura, TLS sem verificação, redirecionamento aberto, HTML sem escape, quebras da CSP nos templates e formulários sem token CSRF. Instale com `pipx install semgrep==1.182.1`.
+- **DAST** (análise dinâmica): `tests/dast/hostile_cases.py` cria uma base temporária, sobe o sistema com HTTPS e MFA e o ataca pela rede, sem olhar o código, em 22 casos: cabeçalhos de segurança, HTTP sem TLS, Host falso, métodos proibidos, páginas sem login, senha errada, injeção de SQL no login e na busca, CSRF, MFA (senha sozinha e 5 códigos errados), XSS armazenado, path traversal, upload de executável disfarçado e de arquivo gigante, redirecionamento aberto, vazamento de erros, privilégios do operador, logout e força bruta.
+
+## Pipeline
+
+O pipeline de integração contínua, definido em [`.github/workflows/projeto-extensao.yml`](../../.github/workflows/projeto-extensao.yml) na raiz do repositório, roda no GitHub Actions com quatro jobs: **Build**, e depois **SAST**, **Tests** e **DAST** em paralelo. Ele é executado:
+
+- a cada push na `main` e a cada pull request para a `main` que altere esta pasta;
+- **todo dia às 06:00 (Brasília)**, para pegar problemas novos mesmo sem commits;
+- sob demanda, pelo botão **Run workflow** na aba **Actions** do GitHub.
+
+Se algum job falhar, o GitHub marca o commit com um X vermelho e avisa por e-mail quem fez o push.
 
 ## Banco de dados e modelagem
 
