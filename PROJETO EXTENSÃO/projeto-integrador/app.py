@@ -490,7 +490,11 @@ def login():
     if current_user():
         return redirect(url_for("dashboard_page"))
     if request.method == "GET":
+        # Limpa a sessão anterior, mas preserva os avisos (ex.: "código expirado") para aparecerem na tela.
+        flashes = session.get("_flashes")
         session.clear()
+        if flashes:
+            session["_flashes"] = flashes
         session["csrf"] = secrets.token_hex(32)
         return render_template("login.html")
 
@@ -1740,7 +1744,7 @@ def not_found(e):
 
 @app.errorhandler(403)
 def forbidden(e):
-    flash("Acesso não autorizado.", "error")
+    flash("O formulário expirou ou veio de outra página. Tente de novo.", "error")
     return redirect(url_for("login"))
 
 

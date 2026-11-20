@@ -93,6 +93,13 @@ class TestAuth(Base):
         mailer.test_codes.pop("admin@teste.com")
         self.assertEqual(c2.post("/login/codigo", data={"codigo": "000000", "_csrf": csrf(c2.get('/login/codigo').text)}).status_code, 401)
 
+    def test_token_antigo_mostra_aviso(self):
+        c = self.client()
+        c.get("/login")
+        r = c.post("/login", data={"email": "admin@teste.com", "senha": "SenhaForte#2026", "_csrf": "token-antigo"},
+                   follow_redirects=True)
+        self.assertIn("O formulário expirou", r.text)
+
     def test_csrf(self):
         c, _ = self.login()
         self.assertEqual(c.post("/clients/new", data={"nome": "X"}).status_code, 302)  # 403 vira redirect ao login
