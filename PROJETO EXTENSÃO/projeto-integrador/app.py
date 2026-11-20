@@ -17,6 +17,7 @@ from flask import (
     session, abort, send_file, g,
 )
 from werkzeug.middleware.proxy_fix import ProxyFix
+from werkzeug.serving import WSGIRequestHandler
 
 import crypto_utils
 import mailer
@@ -1787,7 +1788,13 @@ def main():
     if MFA_MODE == "console":
         print("MFA em modo console: o código de acesso aparece neste terminal (só para desenvolvimento).")
     print(f"Marquezi disponível em {APP_ORIGIN or _origin.geturl()}")
-    app.run(host=HOST, port=PORT, ssl_context=context, threaded=True, debug=False)
+    app.run(host=HOST, port=PORT, ssl_context=context, threaded=True, debug=False, request_handler=_QuietHandler)
+
+
+class _QuietHandler(WSGIRequestHandler):
+    # Não anuncia as versões do Werkzeug e do Python no cabeçalho Server.
+    def version_string(self):
+        return "Marquezi"
 
 
 if __name__ == "__main__":

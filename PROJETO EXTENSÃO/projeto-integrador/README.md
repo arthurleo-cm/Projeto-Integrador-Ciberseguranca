@@ -2,6 +2,8 @@
 
 Aplicação de uso interno para clientes, processos jurídicos não penais, recebimentos, contatos, endereços, documentos, usuários e auditoria. Interface responsiva em português, montada no servidor em Python. Não há contas padrão nem dados pessoais guardados no navegador.
 
+> **Segurança:** [SEGURANCA.md](SEGURANCA.md) resume a stack e todos os controles (cabeçalhos, criptografia, hashes, HTTPS, SAST e DAST). [SEGURANCA-EVIDENCIAS.md](SEGURANCA-EVIDENCIAS.md) mostra onde cada um está no código e como conferir na prática.
+
 ## Tecnologias
 
 | Parte | Tecnologia |
@@ -23,12 +25,11 @@ Na pasta do projeto:
 python3 -m venv venv
 source venv/bin/activate          # no Windows: venv\Scripts\activate
 pip install -r requirements.txt
-python manage.py setup            # cria data/, a chave de cifragem, o banco e o primeiro administrador
-python manage.py tls              # opcional: certificado HTTPS local
+python manage.py setup            # cria data/, a chave, o banco, o certificado HTTPS e o primeiro administrador
 python app.py
 ```
 
-Acesse **https://localhost:5000** (com `tls`) ou **http://localhost:5000** (sem). Com o certificado local, o navegador mostra um aviso na primeira vez, o que é esperado porque não existe autoridade pública para `localhost`.
+Acesse **https://localhost:5000**. O certificado é autoassinado, então o navegador mostra um aviso na primeira vez, o que é esperado porque não existe autoridade pública para `localhost`. Instalações feitas antes do HTTPS automático podem gerar o certificado com `python manage.py tls`; para rodar sem HTTPS (não recomendado), use `TLS_MODE=off`.
 
 O `setup` pede nome, e-mail e senha do primeiro administrador (mínimo de 12 caracteres, entrada oculta). Rodar de novo preserva as contas existentes e nunca gera uma chave nova sobre um banco já existente. O administrador cadastra a equipe em **Usuários**: uma conta individual por funcionário, com um e-mail que só ele acessa, porque é para lá que vai o código de acesso. Não existe recuperação de senha por e-mail; um administrador pode redefini-la.
 

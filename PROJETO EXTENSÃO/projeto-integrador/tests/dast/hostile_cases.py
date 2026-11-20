@@ -131,6 +131,7 @@ def caso_cabecalhos_de_seguranca():
         "Referrer-Policy": h.get("Referrer-Policy") == "same-origin",
         "COOP": h.get("Cross-Origin-Opener-Policy") == "same-origin",
         "sem cache": h.get("Cache-Control") == "no-store",
+        "Server sem versões": not re.search(r"Werkzeug|Python|\d+\.\d+", h.get("Server", "")),
         "cookie __Host- Secure HttpOnly SameSite=Strict": cookie.startswith("__Host-sessao=")
         and all(f in cookie for f in ("Secure", "HttpOnly", "SameSite=Strict")),
     }
@@ -363,7 +364,7 @@ CASOS = [
 
 def preparar():
     admin_env = {**ENV, "ADMIN_NOME": ADMIN["nome"], "ADMIN_EMAIL": ADMIN["email"], "ADMIN_SENHA": ADMIN["senha"]}
-    for cmd in (["setup"], ["tls"]):
+    for cmd in (["setup"],):
         subprocess.run([sys.executable, "manage.py", *cmd], cwd=ROOT, env=admin_env, check=True,
                        stdout=subprocess.DEVNULL)
     log = LOG.open("w")

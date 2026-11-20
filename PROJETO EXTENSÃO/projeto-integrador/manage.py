@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Comandos de administração do Marquezi Gestão. Uso: python manage.py <comando>
 
-  setup                         cria a pasta data/, a chave de cifragem, o banco e o primeiro administrador
+  setup                         cria a pasta data/, a chave de cifragem, o banco, o certificado HTTPS e o primeiro administrador
   tls [--renew]                 gera um certificado HTTPS local (localhost) válido por 1 ano
   smtp [--replace]              configura a conta Gmail que envia os códigos de acesso (MFA)
   backup DESTINO                copia o banco e a chave de cifragem para uma pasta nova
@@ -66,6 +66,8 @@ def cmd_setup(args):
     db.executescript(SCHEMA_PATH.read_text())
     os.chmod(DB_PATH, 0o600)
     print(f"Banco de dados pronto em {DB_PATH}")
+    if not (DATA_DIR / "tls" / "localhost-cert.pem").exists():
+        cmd_tls([])  # HTTPS por padrão: certificado autoassinado para localhost
     if db.execute("SELECT count(*) FROM usuarios WHERE perfil='ADMINISTRADOR' AND ativo=1").fetchone()[0]:
         print("Já existe um administrador ativo. Nada mais a fazer.")
         return
